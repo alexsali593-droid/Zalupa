@@ -1,0 +1,3846 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>NOVA NFT</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://unpkg.com/@tonconnect/ui@2.0.9/dist/tonconnect-ui.min.js"></script>
+
+  <style>
+    :root {
+      --bg: var(--tg-theme-bg-color, #0e0e10);
+      --secondary-bg: var(--tg-theme-secondary-bg-color, #1c1c1e);
+      --text: var(--tg-theme-text-color, #ffffff);
+      --hint: var(--tg-theme-hint-color, #8e8e93);
+      --link: var(--tg-theme-link-color, #2aabee);
+      --button: var(--tg-theme-button-color, #2aabee);
+      --button-text: var(--tg-theme-button-text-color, #ffffff);
+      --section: var(--tg-theme-section-bg-color, #1c1c1e);
+      --destructive: var(--tg-theme-destructive-text-color, #ff453a);
+      --accent: #2aabee;
+      --card: #1c1c1e;
+      --border: rgba(255,255,255,0.06);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    button, input {
+      font: inherit;
+      border: none;
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding-bottom: 88px;
+    }
+
+    /* ===== TOPBAR ===== */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: rgba(14,14,16,0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #2aabee, #1a8fd0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(42,171,238,0.3);
+    }
+
+    .brand-text {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    .sell-btn {
+      padding: 9px 14px;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(42,171,238,0.25);
+    }
+
+    /* ===== PAGES ===== */
+    .page {
+      display: none;
+      padding: 12px 16px 24px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      padding: 20px 18px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #1a2a3a 0%, #121820 100%);
+      border: 1px solid rgba(42,171,238,0.15);
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      margin-bottom: 6px;
+    }
+
+    .hero-sub {
+      color: var(--hint);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .section-title {
+      font-size: 17px;
+      font-weight: 700;
+      margin: 0 0 12px 2px;
+      letter-spacing: -0.2px;
+    }
+
+    /* ===== SEARCH ===== */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--hint);
+      font-size: 17px;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 44px 0 42px;
+      border-radius: 14px;
+      background: #1c1c1e;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 15px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: rgba(42,171,238,0.5);
+      background: #202023;
+    }
+
+    .search-input::placeholder {
+      color: #636366;
+    }
+
+    .search-clear {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: #2c2c2e;
+      color: #aaa;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+    }
+
+    .search-clear.show {
+      display: flex;
+    }
+
+    .search-result-count {
+      min-height: 17px;
+      margin: -7px 0 12px 3px;
+      color: var(--hint);
+      font-size: 12px;
+    }
+
+    /* ===== NFT GRID ===== */
+    .nft-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .nft-card {
+      background: var(--card);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform 0.15s ease;
+    }
+
+    .nft-card:active {
+      transform: scale(0.97);
+    }
+
+    .nft-img-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      background: #252528;
+      overflow: hidden;
+    }
+
+    .nft-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .nft-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 28px;
+      color: rgba(255,255,255,0.25);
+    }
+
+    .nft-placeholder span {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+      padding: 0 8px;
+    }
+
+    .nft-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(8px);
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.2px;
+    }
+
+    .nft-number {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      padding: 3px 8px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      font-size: 10px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .nft-info {
+      padding: 11px 12px 13px;
+    }
+
+    .nft-name {
+      font-size: 13px;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 8px;
+    }
+
+    .nft-number-text {
+      color: var(--hint);
+      font-size: 11px;
+      margin-top: -4px;
+      margin-bottom: 8px;
+    }
+
+    .nft-prices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .price-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(42,171,238,0.12);
+      color: #5ac8fa;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .price-tag.stars {
+      background: rgba(255,204,0,0.12);
+      color: #ffd60a;
+    }
+
+    .buy-btn {
+      width: 100%;
+      margin-top: 10px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 650;
+      box-shadow: 0 2px 8px rgba(42,171,238,0.25);
+    }
+
+    .buy-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* ===== EMPTY ===== */
+    .empty {
+      padding: 48px 20px;
+      text-align: center;
+      background: var(--card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .empty-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      background: #2c2c2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #636366;
+    }
+
+    .empty-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .empty-text {
+      color: var(--hint);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    /* ===== BALANCE ===== */
+    .balance-card {
+      background: linear-gradient(145deg, #1a2a3a, #141c24);
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid rgba(42,171,238,0.12);
+      margin-bottom: 16px;
+    }
+
+    .balance-label {
+      color: var(--hint);
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .balance-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .balance-item {
+      background: rgba(255,255,255,0.04);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .balance-item-label {
+      color: var(--hint);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .balance-item-value {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    /* ===== TABS ===== */
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+      background: #1c1c1e;
+      padding: 4px;
+      border-radius: 14px;
+    }
+
+    .tab {
+      height: 42px;
+      border-radius: 11px;
+      background: transparent;
+      color: var(--hint);
+      font-size: 14px;
+      font-weight: 600;
+      transition: 0.15s;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(42,171,238,0.3);
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    /* ===== INPUTS ===== */
+    .field-label {
+      display: block;
+      color: var(--hint);
+      font-size: 13px;
+      font-weight: 500;
+      margin: 0 0 8px 2px;
+    }
+
+    .field {
+      width: 100%;
+      height: 50px;
+      padding: 0 16px;
+      border-radius: 14px;
+      background: #1c1c1e;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .field:focus {
+      border-color: rgba(42,171,238,0.5);
+    }
+
+    .field::placeholder {
+      color: #636366;
+    }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      width: 100%;
+      height: 50px;
+      border-radius: 14px;
+      font-size: 15px;
+      font-weight: 650;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(42,171,238,0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: #2c2c2e;
+      color: var(--text);
+      margin-top: 10px;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-row .btn {
+      flex: 1;
+      height: 44px;
+      font-size: 13px;
+    }
+
+    /* ===== NOTICE ===== */
+    .notice {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #1c1c1e;
+      border: 1px solid var(--border);
+      color: var(--hint);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .notice b {
+      color: var(--text);
+    }
+
+    /* ===== STATUS ===== */
+    .status {
+      display: none;
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      background: #1c1c1e;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .status.show {
+      display: block;
+    }
+
+    .status-title {
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    /* ===== TON PAY BOX ===== */
+    .pay-box {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 16px;
+      background: #1c1c1e;
+      border: 1px solid rgba(42,171,238,0.15);
+    }
+
+    .pay-box.show {
+      display: block;
+    }
+
+    .pay-label {
+      color: var(--hint);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+
+    .pay-value {
+      font-size: 13px;
+      font-weight: 500;
+      word-break: break-all;
+      color: var(--text);
+      margin-bottom: 14px;
+      line-height: 1.4;
+      background: #2c2c2e;
+      padding: 10px 12px;
+      border-radius: 10px;
+    }
+
+    /* ===== PROFILE ===== */
+    .profile-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .profile-head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .avatar {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #2c2c2e;
+      border: 2px solid rgba(42,171,238,0.3);
+    }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .profile-username {
+      color: var(--hint);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .wallet-section {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .wallet-title {
+      font-size: 14px;
+      font-weight: 650;
+      margin-bottom: 10px;
+    }
+
+    #ton-connect {
+      min-height: 44px;
+    }
+
+    .wallet-address {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #2c2c2e;
+      color: var(--hint);
+      font-size: 11px;
+      word-break: break-all;
+    }
+
+    /* ===== SELL ===== */
+    .price-methods {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .price-method {
+      height: 44px;
+      border-radius: 12px;
+      background: #1c1c1e;
+      color: var(--hint);
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .price-method.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .price-box {
+      display: none;
+    }
+
+    .price-box.active {
+      display: block;
+    }
+
+    /* ===== BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(480px, 100%);
+      z-index: 40;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+      background: rgba(14,14,16,0.95);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border);
+    }
+
+    .nav-btn {
+      height: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      background: transparent;
+      color: #636366;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .nav-btn .nav-icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .nav-btn.active {
+      color: var(--accent);
+      background: rgba(42,171,238,0.1);
+    }
+
+    /* ===== LOADER ===== */
+    .loader {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .ph-snoop {
+      background: linear-gradient(145deg, #2d1f3d, #1a1225);
+    }
+
+    .ph-lol {
+      background: linear-gradient(145deg, #1f2d3d, #122025);
+    }
+
+    .ph-lunar {
+      background: linear-gradient(145deg, #1f2d2a, #12201c);
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">N</div>
+      <div class="brand-text">NOVA NFT</div>
+    </div>
+
+    <button class="sell-btn" onclick="openSell()">+ Выставить</button>
+  </header>
+
+  <!-- MARKET -->
+  <main id="page-market" class="page active">
+
+    <section class="hero">
+      <h1 class="hero-title">Маркетплейс</h1>
+      <p class="hero-sub">
+        Покупай и продавай Telegram NFT-подарки быстро и безопасно
+      </p>
+    </section>
+
+    <!-- SEARCH -->
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+
+      <input
+        id="market-search"
+        class="search-input"
+        type="search"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        spellcheck="false"
+        placeholder="#00000 Lunar Snake"
+        oninput="handleMarketSearch()"
+      >
+
+      <button
+        id="search-clear"
+        class="search-clear"
+        onclick="clearMarketSearch()"
+        aria-label="Очистить поиск"
+      >×</button>
+    </div>
+
+    <div id="search-result-count" class="search-result-count"></div>
+
+    <h2 class="section-title">Доступные NFT</h2>
+
+    <div id="market-container" class="nft-grid"></div>
+  </main>
+
+  <!-- TOPUP -->
+  <main id="page-topup" class="page">
+
+    <section class="hero">
+      <h1 class="hero-title">Пополнение</h1>
+      <p class="hero-sub">
+        Пополняй баланс через TON или Telegram Stars
+      </p>
+    </section>
+
+    <div class="balance-card">
+      <div class="balance-label">Твой баланс</div>
+
+      <div class="balance-row">
+
+        <div class="balance-item">
+          <div class="balance-item-label">TON</div>
+          <div class="balance-item-value">
+            <span id="balance-ton">0</span>
+          </div>
+        </div>
+
+        <div class="balance-item">
+          <div class="balance-item-label">Stars</div>
+          <div class="balance-item-value">
+            <span id="balance-stars">0</span> ⭐
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button id="tab-ton" class="tab active" onclick="switchTopupTab('ton')">
+        💎 TON
+      </button>
+
+      <button id="tab-stars" class="tab" onclick="switchTopupTab('stars')">
+        ⭐ Stars
+      </button>
+    </div>
+
+    <div id="panel-ton" class="panel active">
+
+      <label class="field-label">Сумма в TON</label>
+
+      <input
+        id="topup-ton"
+        class="field"
+        type="number"
+        min="0.1"
+        step="0.1"
+        placeholder="Например, 1.5"
+      >
+
+      <button
+        id="topup-ton-button"
+        class="btn btn-primary"
+        onclick="createTonInvoice()"
+      >
+        Пополнить TON
+      </button>
+
+      <div id="ton-pay-box" class="pay-box">
+
+        <div class="pay-label">Адрес</div>
+        <div id="ton-address" class="pay-value"></div>
+
+        <div class="pay-label">Комментарий (обязательно)</div>
+        <div id="ton-comment" class="pay-value"></div>
+
+        <div class="pay-label">Сумма</div>
+        <div id="ton-amount" class="pay-value"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="copyTonAddress()">
+            Копировать адрес
+          </button>
+
+          <button class="btn btn-secondary" onclick="copyTonComment()">
+            Копировать memo
+          </button>
+        </div>
+
+        <button
+          class="btn btn-primary"
+          style="margin-top:12px"
+          onclick="openTonDeepLink()"
+        >
+          Открыть кошелёк
+        </button>
+
+        <button
+          class="btn btn-secondary"
+          onclick="checkTonPayment()"
+        >
+          Я отправил — проверить
+        </button>
+
+      </div>
+
+      <div id="topup-ton-status" class="status"></div>
+
+      <div class="notice">
+        Отправь TON на адрес
+        <b>с обязательным комментарием (memo)</b>.
+        Без memo платёж не зачислится.
+      </div>
+
+    </div>
+
+    <div id="panel-stars" class="panel">
+
+      <label class="field-label">Количество Stars</label>
+
+      <input
+        id="topup-stars"
+        class="field"
+        type="number"
+        min="1"
+        step="1"
+        placeholder="Например, 100"
+      >
+
+      <button
+        id="topup-button"
+        class="btn btn-primary"
+        onclick="createInvoice()"
+      >
+        Пополнить ⭐
+      </button>
+
+      <div id="topup-status" class="status"></div>
+
+      <div class="notice">
+        Оплата проходит через Telegram Stars.
+        После подтверждения баланс обновится автоматически.
+      </div>
+
+    </div>
+  </main>
+
+  <!-- BONUS -->
+  <main id="page-bonus" class="page">
+
+    <section class="hero">
+      <h1 class="hero-title">Бонусы</h1>
+      <p class="hero-sub">
+        Здесь появятся специальные предложения NOVA
+      </p>
+    </section>
+
+    <div class="empty">
+      <div class="empty-icon">★</div>
+      <div class="empty-title">Скоро</div>
+      <div class="empty-text">
+        Бонусная система ещё не запущена
+      </div>
+    </div>
+
+  </main>
+
+  <!-- PROFILE -->
+  <main id="page-profile" class="page">
+
+    <section class="hero">
+      <h1 class="hero-title">Профиль</h1>
+      <p class="hero-sub">
+        Твой аккаунт и кошелёк
+      </p>
+    </section>
+
+    <div class="profile-card">
+
+      <div class="profile-head">
+
+        <img
+          id="profile-avatar"
+          class="avatar"
+          src=""
+          alt=""
+        >
+
+        <div>
+          <div id="profile-name" class="profile-name">
+            Пользователь
+          </div>
+
+          <div id="profile-username" class="profile-username">
+            Telegram
+          </div>
+        </div>
+
+      </div>
+
+      <div class="wallet-section">
+
+        <div class="wallet-title">
+          TON-кошелёк
+        </div>
+
+        <div id="ton-connect"></div>
+
+        <div
+          id="wallet-address"
+          class="wallet-address"
+        ></div>
+
+      </div>
+
+    </div>
+
+    <h2 class="section-title">Мои NFT</h2>
+
+    <div id="my-listings">
+
+      <div class="empty">
+        <div class="empty-icon">◇</div>
+
+        <div class="empty-title">
+          NFT пока нет
+        </div>
+
+        <div class="empty-text">
+          Выставленные NFT появятся здесь
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- SELL -->
+  <main id="page-sell" class="page">
+
+    <section class="hero">
+      <h1 class="hero-title">Выставить NFT</h1>
+
+      <p class="hero-sub">
+        Передай Telegram Gift маркету —
+        NOVA определит его автоматически
+      </p>
+    </section>
+
+    <label class="field-label">
+      Цена продажи
+    </label>
+
+    <div class="price-methods">
+
+      <button
+        id="method-ton"
+        class="price-method active"
+        onclick="togglePriceMethod('ton')"
+      >
+        💎 TON
+      </button>
+
+      <button
+        id="method-stars"
+        class="price-method active"
+        onclick="togglePriceMethod('stars')"
+      >
+        ⭐ Stars
+      </button>
+
+    </div>
+
+    <div id="ton-price-box" class="price-box active">
+
+      <label class="field-label">
+        Цена в TON
+      </label>
+
+      <input
+        id="sell-ton"
+        class="field"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Например, 5"
+      >
+
+    </div>
+
+    <div id="stars-price-box" class="price-box active">
+
+      <label class="field-label">
+        Цена в Stars
+      </label>
+
+      <input
+        id="sell-stars"
+        class="field"
+        type="number"
+        min="0"
+        step="1"
+        placeholder="Например, 500"
+      >
+
+    </div>
+
+    <div class="notice">
+
+      <b>Как это работает</b>
+
+      <br><br>
+
+      1. Укажи цену в TON, Stars или обеих валютах
+      <br>
+      2. Нажми «Передать NFT маркету»
+      <br>
+      3. Передай подарок аккаунту <b>@ovnftrelayer</b>
+      <br>
+      4. После подтверждения NFT появится в маркете
+
+    </div>
+
+    <button
+      id="sell-button"
+      class="btn btn-primary"
+      style="margin-top:16px"
+      onclick="startSell()"
+    >
+      Передать NFT маркету
+    </button>
+
+    <button
+      class="btn btn-secondary"
+      onclick="showPage('market')"
+    >
+      Назад в маркет
+    </button>
+
+    <div id="sell-status" class="status"></div>
+
+  </main>
+
+</div>
+
+<nav class="bottom-nav">
+
+  <button
+    class="nav-btn active"
+    data-page="market"
+    onclick="showPage('market')"
+  >
+    <span class="nav-icon">◇</span>
+    <span>Маркет</span>
+  </button>
+
+  <button
+    class="nav-btn"
+    data-page="topup"
+    onclick="showPage('topup')"
+  >
+    <span class="nav-icon">＋</span>
+    <span>Пополнить</span>
+  </button>
+
+  <button
+    class="nav-btn"
+    data-page="bonus"
+    onclick="showPage('bonus')"
+  >
+    <span class="nav-icon">★</span>
+    <span>Бонусы</span>
+  </button>
+
+  <button
+    class="nav-btn"
+    data-page="profile"
+    onclick="showPage('profile')"
+  >
+    <span class="nav-icon">●</span>
+    <span>Профиль</span>
+  </button>
+
+</nav>
+
+<script>
+
+  /* =========================================================
+     CONFIG
+  ========================================================= */
+
+  const API =
+    "https://cir-screen-keep-expansion.trycloudflare.com";
+
+  const TON_MANIFEST =
+    "https://alexsali593-droid.github.io/Zalupa/tonconnect-manifest.json";
+
+  const RELAYER_USERNAME =
+    "ovnftrelayer";
+
+
+  /* =========================================================
+     TELEGRAM
+  ========================================================= */
+
+  const tg =
+    window.Telegram?.WebApp || null;
+
+  if (tg) {
+
+    try {
+      tg.ready();
+      tg.expand();
+    } catch (_) {}
+
+    try {
+
+      document.documentElement.style.setProperty(
+        '--bg',
+        tg.themeParams.bg_color || '#0e0e10'
+      );
+
+      document.documentElement.style.setProperty(
+        '--text',
+        tg.themeParams.text_color || '#ffffff'
+      );
+
+      document.documentElement.style.setProperty(
+        '--hint',
+        tg.themeParams.hint_color || '#8e8e93'
+      );
+
+      document.documentElement.style.setProperty(
+        '--button',
+        tg.themeParams.button_color || '#2aabee'
+      );
+
+      document.documentElement.style.setProperty(
+        '--accent',
+        tg.themeParams.button_color || '#2aabee'
+      );
+
+    } catch (_) {}
+
+  }
+
+
+  /* =========================================================
+     DEMO NFTS
+  ========================================================= */
+
+  const DEMO_NFTS = [
+
+    {
+      id: "snoop_58285",
+      title: "Snoop Dogg #58285",
+      collection: "Snoop Dogg",
+      gift_number: 58285,
+      price_ton: 6.2,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-58285.webp"
+    },
+
+    {
+      id: "snoop_58158",
+      title: "Snoop Dogg #58158",
+      collection: "Snoop Dogg",
+      gift_number: 58158,
+      price_ton: 5.9,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-58158.webp"
+    },
+
+    {
+      id: "snoop_67195",
+      title: "Snoop Dogg #67195",
+      collection: "Snoop Dogg",
+      gift_number: 67195,
+      price_ton: 6.5,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-67195.webp"
+    },
+
+    {
+      id: "snoop_22295",
+      title: "Snoop Dogg #22295",
+      collection: "Snoop Dogg",
+      gift_number: 22295,
+      price_ton: 6.1,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-22295.webp"
+    },
+
+    {
+      id: "snoop_18484",
+      title: "Snoop Dogg #18484",
+      collection: "Snoop Dogg",
+      gift_number: 18484,
+      price_ton: 5.8,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-18484.webp"
+    },
+
+    {
+      id: "snoop_56281",
+      title: "Snoop Dogg #56281",
+      collection: "Snoop Dogg",
+      gift_number: 56281,
+      price_ton: 6.8,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-56281.webp"
+    },
+
+    {
+      id: "snoop_29576",
+      title: "Snoop Dogg #29576",
+      collection: "Snoop Dogg",
+      gift_number: 29576,
+      price_ton: 6.3,
+      type: "snoop",
+      image: "https://nft.fragment.com/gift/snoopdogg-29576.webp"
+    },
+
+    {
+      id: "lol_92481",
+      title: "Lol Pop #92481",
+      collection: "Lol Pop",
+      gift_number: 92481,
+      price_ton: 4.5,
+      type: "lol",
+      image: "https://nft.fragment.com/gift/lolpop-92481.webp"
+    },
+
+    {
+      id: "lol_4856",
+      title: "Lol Pop #4856",
+      collection: "Lol Pop",
+      gift_number: 4856,
+      price_ton: 4.3,
+      type: "lol",
+      image: "https://nft.fragment.com/gift/lolpop-4856.webp"
+    },
+
+    {
+      id: "lol_927",
+      title: "Lol Pop #927",
+      collection: "Lol Pop",
+      gift_number: 927,
+      price_ton: 4.7,
+      type: "lol",
+      image: "https://nft.fragment.com/gift/lolpop-927.webp"
+    },
+
+    {
+      id: "lol_1958",
+      title: "Lol Pop #1958",
+      collection: "Lol Pop",
+      gift_number: 1958,
+      price_ton: 4.2,
+      type: "lol",
+      image: "https://nft.fragment.com/gift/lolpop-1958.webp"
+    },
+
+    {
+      id: "lol_17492",
+      title: "Lol Pop #17492",
+      collection: "Lol Pop",
+      gift_number: 17492,
+      price_ton: 4.6,
+      type: "lol",
+      image: "https://nft.fragment.com/gift/lolpop-17492.webp"
+    },
+
+    {
+      id: "lunar_9247",
+      title: "Lunar Snake #9247",
+      collection: "Lunar Snake",
+      gift_number: 9247,
+      price_ton: 4.3,
+      type: "lunar",
+      image: "https://nft.fragment.com/gift/lunarsnake-9247.webp"
+    },
+
+    {
+      id: "lunar_5285",
+      title: "Lunar Snake #5285",
+      collection: "Lunar Snake",
+      gift_number: 5285,
+      price_ton: 4.1,
+      type: "lunar",
+      image: "https://nft.fragment.com/gift/lunarsnake-5285.webp"
+    },
+
+    {
+      id: "lunar_17952",
+      title: "Lunar Snake #17952",
+      collection: "Lunar Snake",
+      gift_number: 17952,
+      price_ton: 4.5,
+      type: "lunar",
+      image: "https://nft.fragment.com/gift/lunarsnake-17952.webp"
+    },
+
+    {
+      id: "lunar_285",
+      title: "Lunar Snake #285",
+      collection: "Lunar Snake",
+      gift_number: 285,
+      price_ton: 4.2,
+      type: "lunar",
+      image: "https://nft.fragment.com/gift/lunarsnake-285.webp"
+    }
+
+  ];
+
+
+  /* =========================================================
+     MARKET STATE
+  ========================================================= */
+
+  let allMarketNFTs = [];
+  let currentSearch = "";
+
+
+  /* =========================================================
+     INIT DATA
+  ========================================================= */
+
+  function getInitData() {
+
+    return tg?.initData || "";
+
+  }
+
+
+  function getUser() {
+
+    return tg?.initDataUnsafe?.user || null;
+
+  }
+
+
+  /* =========================================================
+     TELEGRAM AUTH CHECK
+  ========================================================= */
+
+  function hasTelegramAuth() {
+
+    return Boolean(
+      tg &&
+      typeof tg.initData === "string" &&
+      tg.initData.length > 0
+    );
+
+  }
+
+
+  function requireTelegramAuth() {
+
+    if (hasTelegramAuth()) {
+      return true;
+    }
+
+    const message =
+      "Открой NOVA NFT через Telegram Mini App. " +
+      "Telegram не передал данные авторизации.";
+
+    if (tg?.showPopup) {
+
+      tg.showPopup({
+        title: "Telegram авторизация",
+        message,
+        buttons: [
+          { type: "ok" }
+        ]
+      });
+
+    } else {
+
+      alert(message);
+
+    }
+
+    return false;
+
+  }
+
+
+  /* =========================================================
+     API
+  ========================================================= */
+
+  async function api(path, options = {}) {
+
+    const initData = getInitData();
+
+    const headers = {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    };
+
+    if (initData) {
+
+      headers["X-Telegram-Init-Data"] =
+        initData;
+
+    }
+
+    const requestOptions = {
+      ...options,
+      headers,
+      mode: "cors",
+      credentials: "include"
+    };
+
+    const response =
+      await fetch(API + path, requestOptions);
+
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch (_) {}
+
+    if (!response.ok) {
+
+      if (response.status === 401) {
+
+        throw new Error(
+          "Telegram авторизация не подтверждена. " +
+          "Открой приложение через Telegram."
+        );
+
+      }
+
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        `Ошибка сервера (${response.status})`
+      );
+
+    }
+
+    return data;
+
+  }
+
+
+  /* =========================================================
+     NAVIGATION
+  ========================================================= */
+
+  function showPage(page) {
+
+    document
+      .querySelectorAll(".page")
+      .forEach(el =>
+        el.classList.remove("active")
+      );
+
+    const target =
+      document.getElementById("page-" + page);
+
+    if (target) {
+      target.classList.add("active");
+    }
+
+    document
+      .querySelectorAll(".nav-btn")
+      .forEach(btn => {
+
+        btn.classList.toggle(
+          "active",
+          btn.dataset.page === page
+        );
+
+      });
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+
+    if (page === "market") {
+      loadListings();
+    }
+
+    if (page === "topup") {
+      loadBalance();
+    }
+
+    if (page === "profile") {
+      loadProfile();
+      loadMyListings();
+    }
+
+  }
+
+
+  function openSell() {
+
+    showPage("sell");
+
+  }
+
+
+  /* =========================================================
+     TOPUP TABS
+  ========================================================= */
+
+  function switchTopupTab(tab) {
+
+    document
+      .getElementById("tab-ton")
+      .classList.toggle(
+        "active",
+        tab === "ton"
+      );
+
+    document
+      .getElementById("tab-stars")
+      .classList.toggle(
+        "active",
+        tab === "stars"
+      );
+
+    document
+      .getElementById("panel-ton")
+      .classList.toggle(
+        "active",
+        tab === "ton"
+      );
+
+    document
+      .getElementById("panel-stars")
+      .classList.toggle(
+        "active",
+        tab === "stars"
+      );
+
+  }
+
+
+  /* =========================================================
+     PROFILE
+  ========================================================= */
+
+  function loadProfile() {
+
+    const user = getUser();
+
+    if (!user) return;
+
+    const name =
+      [
+        user.first_name || "",
+        user.last_name || ""
+      ]
+      .join(" ")
+      .trim() ||
+      "Пользователь";
+
+    document
+      .getElementById("profile-name")
+      .textContent = name;
+
+    document
+      .getElementById("profile-username")
+      .textContent =
+      user.username
+        ? "@" + user.username
+        : "Telegram";
+
+    const avatar =
+      document.getElementById("profile-avatar");
+
+    if (user.photo_url) {
+
+      avatar.src = user.photo_url;
+      avatar.style.display = "block";
+
+    } else {
+
+      avatar.style.display = "none";
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SEARCH HELPERS
+  ========================================================= */
+
+  function normalizeSearch(value) {
+
+    return String(value || "")
+      .toLowerCase()
+      .replace(/ё/g, "е")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  }
+
+
+  function getGiftNumber(nft) {
+
+    const candidates = [
+
+      nft?.gift_number,
+      nft?.nft_number,
+      nft?.number,
+      nft?.gift_id,
+      nft?.telegram_gift_id
+
+    ];
+
+    for (const value of candidates) {
+
+      if (
+        value !== undefined &&
+        value !== null &&
+        String(value).trim() !== ""
+      ) {
+
+        const match =
+          String(value).match(/\d+/);
+
+        if (match) {
+          return match[0];
+        }
+
+      }
+
+    }
+
+    const title =
+      String(
+        nft?.title ||
+        nft?.name ||
+        ""
+      );
+
+    const titleMatch =
+      title.match(/#\s*(\d+)/);
+
+    if (titleMatch) {
+      return titleMatch[1];
+    }
+
+    return "";
+
+  }
+
+
+  function getGiftTitle(nft) {
+
+    return (
+      nft?.title ||
+      nft?.name ||
+      nft?.gift_name ||
+      nft?.collection ||
+      "Telegram Gift"
+    );
+
+  }
+
+
+  function getGiftCollection(nft) {
+
+    return (
+      nft?.collection ||
+      nft?.gift_collection ||
+      nft?.collection_name ||
+      ""
+    );
+
+  }
+
+
+  function buildSearchText(nft) {
+
+    const title =
+      getGiftTitle(nft);
+
+    const collection =
+      getGiftCollection(nft);
+
+    const number =
+      getGiftNumber(nft);
+
+    const id =
+      nft?.id ||
+      nft?.listing_id ||
+      "";
+
+    return normalizeSearch(
+      [
+        title,
+        collection,
+        number,
+        "#" + number,
+        id
+      ].join(" ")
+    );
+
+  }
+
+
+  function matchesSearch(nft, query) {
+
+    const q =
+      normalizeSearch(query);
+
+    if (!q) return true;
+
+    const searchText =
+      buildSearchText(nft);
+
+    /*
+      Позволяем искать:
+
+      Lunar Snake
+      lunar snake
+      #00000
+      00000
+      #00000 lunar snake
+    */
+
+    const parts =
+      q.split(" ").filter(Boolean);
+
+    return parts.every(part =>
+      searchText.includes(part)
+    );
+
+  }
+
+
+  function handleMarketSearch() {
+
+    const input =
+      document.getElementById("market-search");
+
+    currentSearch =
+      input?.value || "";
+
+    const clear =
+      document.getElementById("search-clear");
+
+    if (clear) {
+
+      clear.classList.toggle(
+        "show",
+        Boolean(currentSearch.trim())
+      );
+
+    }
+
+    renderMarket();
+
+  }
+
+
+  function clearMarketSearch() {
+
+    const input =
+      document.getElementById("market-search");
+
+    if (input) {
+      input.value = "";
+    }
+
+    currentSearch = "";
+
+    const clear =
+      document.getElementById("search-clear");
+
+    if (clear) {
+      clear.classList.remove("show");
+    }
+
+    renderMarket();
+
+    if (input) {
+      input.focus();
+    }
+
+  }
+
+
+  /* =========================================================
+     MARKET RENDER
+  ========================================================= */
+
+  function renderMarket() {
+
+    const container =
+      document.getElementById(
+        "market-container"
+      );
+
+    if (!container) return;
+
+    const filtered =
+      allMarketNFTs.filter(nft =>
+        matchesSearch(
+          nft,
+          currentSearch
+        )
+      );
+
+    const count =
+      document.getElementById(
+        "search-result-count"
+      );
+
+    if (currentSearch.trim()) {
+
+      if (count) {
+
+        count.textContent =
+          filtered.length === 0
+            ? "Ничего не найдено"
+            : `Найдено: ${filtered.length}`;
+
+      }
+
+    } else {
+
+      if (count) {
+        count.textContent = "";
+      }
+
+    }
+
+    if (!filtered.length) {
+
+      container.innerHTML = `
+
+        <div
+          class="empty"
+          style="grid-column:1/-1"
+        >
+
+          <div class="empty-icon">⌕</div>
+
+          <div class="empty-title">
+            Ничего не найдено
+          </div>
+
+          <div class="empty-text">
+            Попробуй ввести название подарка
+            или его номер, например
+            <b>#00000 Lunar Snake</b>.
+          </div>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+    container.innerHTML =
+      filtered
+        .map(renderAnyNFT)
+        .join("");
+
+  }
+
+
+  function renderAnyNFT(nft) {
+
+    if (nft.__demo) {
+
+      return renderDemoNFT(nft);
+
+    }
+
+    return renderNFT(nft);
+
+  }
+
+
+  /* =========================================================
+     DEMO NFT
+  ========================================================= */
+
+  function renderDemoNFT(nft) {
+
+    const image =
+      nft.image || "";
+
+    const number =
+      getGiftNumber(nft);
+
+    const img =
+      image
+        ? `
+          <img
+            class="nft-img"
+            src="${escapeAttribute(image)}"
+            alt="${escapeAttribute(nft.title)}"
+            loading="lazy"
+            onerror="
+              this.style.display='none';
+              this.nextElementSibling.style.display='flex';
+            "
+          >
+        `
+        : "";
+
+    const phClass =
+      nft.type === "snoop"
+        ? "ph-snoop"
+        : nft.type === "lol"
+          ? "ph-lol"
+          : "ph-lunar";
+
+    const emoji =
+      nft.type === "snoop"
+        ? "🎤"
+        : nft.type === "lol"
+          ? "🍭"
+          : "🐍";
+
+    return `
+
+      <article
+        class="nft-card"
+        data-search="${escapeAttribute(buildSearchText(nft))}"
+      >
+
+        <div
+          class="nft-img-wrap ${phClass}"
+        >
+
+          ${img}
+
+          <div
+            class="nft-placeholder"
+            style="${image ? "display:none" : ""}"
+          >
+            ${emoji}
+            <span>
+              ${escapeHTML(nft.collection)}
+            </span>
+          </div>
+
+          <div class="nft-badge">
+            ${escapeHTML(nft.collection)}
+          </div>
+
+          ${
+            number
+              ? `<div class="nft-number">#${escapeHTML(number)}</div>`
+              : ""
+          }
+
+        </div>
+
+        <div class="nft-info">
+
+          <div class="nft-name">
+            ${escapeHTML(nft.title)}
+          </div>
+
+          ${
+            number
+              ? `
+                <div class="nft-number-text">
+                  #${escapeHTML(number)}
+                </div>
+              `
+              : ""
+          }
+
+          <div class="nft-prices">
+
+            <div class="price-tag">
+              💎 ${escapeHTML(String(nft.price_ton))} TON
+            </div>
+
+          </div>
+
+          <button
+            class="buy-btn"
+            onclick="
+              buyNFT(
+                '${escapeAttribute(nft.id)}',
+                ${Number(nft.price_ton) || 0},
+                '${escapeAttribute(nft.title)}'
+              )
+            "
+          >
+            Купить
+          </button>
+
+        </div>
+
+      </article>
+
+    `;
+
+  }
+
+
+  /* =========================================================
+     LOAD MARKET
+  ========================================================= */
+
+  async function loadListings() {
+
+    const container =
+      document.getElementById(
+        "market-container"
+      );
+
+    if (!container) return;
+
+    /*
+      Сначала показываем демо.
+      Реальные listings потом добавятся.
+    */
+
+    allMarketNFTs =
+      DEMO_NFTS.map(nft => ({
+        ...nft,
+        __demo: true
+      }));
+
+    renderMarket();
+
+    try {
+
+      const data =
+        await api("/api/listings");
+
+      const listings =
+        Array.isArray(data)
+          ? data
+          : (data?.listings || []);
+
+      const real =
+        listings.filter(item =>
+          item &&
+          (
+            item.status === "active" ||
+            item.status === undefined
+          ) &&
+          (
+            item.telegram_gift_id ||
+            item.gift_id ||
+            item.nft_id ||
+            item.id
+          )
+        );
+
+      if (real.length) {
+
+        /*
+          Добавляем реальные NFT.
+          Они становятся частью массива поиска.
+        */
+
+        allMarketNFTs = [
+          ...DEMO_NFTS.map(nft => ({
+            ...nft,
+            __demo: true
+          })),
+          ...real.map(item => ({
+            ...item,
+            __demo: false
+          }))
+        ];
+
+      }
+
+      renderMarket();
+
+    } catch (e) {
+
+      console.warn(
+        "real listings:",
+        e
+      );
+
+      renderMarket();
+
+    }
+
+  }
+
+
+  /* =========================================================
+     REAL NFT RENDER
+  ========================================================= */
+
+  function renderNFT(nft) {
+
+    const image =
+      nft.image_url ||
+      (nft.image && nft.image.url) ||
+      (
+        typeof nft.image === "string"
+          ? nft.image
+          : ""
+      ) ||
+      "";
+
+    const title =
+      getGiftTitle(nft);
+
+    const collection =
+      getGiftCollection(nft);
+
+    const number =
+      getGiftNumber(nft);
+
+    /*
+      Если backend вернул название без #,
+      добавляем номер автоматически.
+    */
+
+    let displayTitle =
+      title;
+
+    if (
+      number &&
+      !/#\s*\d+/.test(displayTitle)
+    ) {
+
+      displayTitle =
+        `${displayTitle} #${number}`;
+
+    }
+
+    const ton =
+      Number(
+        nft.price_ton || 0
+      );
+
+    const stars =
+      Number(
+        nft.price_stars || 0
+      );
+
+    let prices = "";
+
+    if (ton > 0) {
+
+      prices += `
+        <div class="price-tag">
+          💎 ${escapeHTML(String(ton))} TON
+        </div>
+      `;
+
+    }
+
+    if (stars > 0) {
+
+      prices += `
+        <div class="price-tag stars">
+          ⭐ ${escapeHTML(String(stars))}
+        </div>
+      `;
+
+    }
+
+    /*
+      Реальный listing может иметь разные поля.
+      Поэтому для покупки передаём ID listing.
+    */
+
+    const listingId =
+      nft.listing_id ||
+      nft.id ||
+      nft.telegram_gift_id ||
+      "";
+
+    return `
+
+      <article
+        class="nft-card"
+        data-search="${escapeAttribute(buildSearchText({
+          ...nft,
+          title: displayTitle
+        }))}"
+      >
+
+        <div class="nft-img-wrap">
+
+          ${
+            image
+              ? `
+                <img
+                  class="nft-img"
+                  src="${escapeAttribute(image)}"
+                  alt="${escapeAttribute(displayTitle)}"
+                  loading="lazy"
+                  onerror="this.style.display='none'"
+                >
+              `
+              : `
+                <div class="nft-placeholder">
+                  🎁
+                  <span>
+                    ${escapeHTML(collection || "Telegram Gift")}
+                  </span>
+                </div>
+              `
+          }
+
+          ${
+            collection
+              ? `
+                <div class="nft-badge">
+                  ${escapeHTML(collection)}
+                </div>
+              `
+              : ""
+          }
+
+          ${
+            number
+              ? `
+                <div class="nft-number">
+                  #${escapeHTML(number)}
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
+        <div class="nft-info">
+
+          <div class="nft-name">
+            ${escapeHTML(displayTitle)}
+          </div>
+
+          ${
+            number
+              ? `
+                <div class="nft-number-text">
+                  #${escapeHTML(number)}
+                </div>
+              `
+              : ""
+          }
+
+          <div class="nft-prices">
+            ${prices}
+          </div>
+
+          ${
+            ton > 0
+              ? `
+                <button
+                  class="buy-btn"
+                  onclick="
+                    buyRealNFT(
+                      '${escapeAttribute(listingId)}',
+                      ${ton},
+                      '${escapeAttribute(displayTitle)}'
+                    )
+                  "
+                >
+                  Купить
+                </button>
+              `
+              : ""
+          }
+
+        </div>
+
+      </article>
+
+    `;
+
+  }
+
+
+  /* =========================================================
+     REAL NFT BUY
+  ========================================================= */
+
+  async function buyRealNFT(
+    listingId,
+    price,
+    title
+  ) {
+
+    /*
+      Пока backend purchase endpoint
+      не был показан, не отправляем
+      неизвестный запрос.
+
+      Показываем существующий demo flow.
+    */
+
+    await buyNFT(
+      listingId,
+      price,
+      title
+    );
+
+  }
+
+
+  /* =========================================================
+     SELL
+  ========================================================= */
+
+  let priceMethods = {
+    ton: true,
+    stars: true
+  };
+
+
+  function togglePriceMethod(method) {
+
+    priceMethods[method] =
+      !priceMethods[method];
+
+    updatePriceMethods();
+
+  }
+
+
+  function updatePriceMethods() {
+
+    document
+      .getElementById("method-ton")
+      .classList.toggle(
+        "active",
+        priceMethods.ton
+      );
+
+    document
+      .getElementById("method-stars")
+      .classList.toggle(
+        "active",
+        priceMethods.stars
+      );
+
+    document
+      .getElementById("ton-price-box")
+      .classList.toggle(
+        "active",
+        priceMethods.ton
+      );
+
+    document
+      .getElementById("stars-price-box")
+      .classList.toggle(
+        "active",
+        priceMethods.stars
+      );
+
+    if (!priceMethods.ton) {
+
+      document.getElementById(
+        "sell-ton"
+      ).value = "";
+
+    }
+
+    if (!priceMethods.stars) {
+
+      document.getElementById(
+        "sell-stars"
+      ).value = "";
+
+    }
+
+  }
+
+
+  let sellPollingTimer = null;
+
+
+  async function startSell() {
+
+    if (!requireTelegramAuth()) {
+      return;
+    }
+
+    const ton =
+      priceMethods.ton
+        ? Number(
+            document.getElementById(
+              "sell-ton"
+            ).value || 0
+          )
+        : 0;
+
+    const stars =
+      priceMethods.stars
+        ? Number(
+            document.getElementById(
+              "sell-stars"
+            ).value || 0
+          )
+        : 0;
+
+    const button =
+      document.getElementById(
+        "sell-button"
+      );
+
+    const status =
+      document.getElementById(
+        "sell-status"
+      );
+
+    if (
+      ton <= 0 &&
+      stars <= 0
+    ) {
+
+      showStatus(
+        status,
+        "Укажи цену",
+        "Выбери хотя бы одну валюту и укажи цену."
+      );
+
+      return;
+
+    }
+
+    button.disabled = true;
+
+    button.innerHTML =
+      `<span class="loader"></span>`;
+
+    showStatus(
+      status,
+      "Создаём заявку...",
+      "Подготавливаем передачу NFT."
+    );
+
+    try {
+
+      const result =
+        await api(
+          "/api/listings/start",
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              price_ton:
+                ton > 0
+                  ? ton
+                  : null,
+
+              price_stars:
+                stars > 0
+                  ? Math.round(stars)
+                  : null
+            })
+          }
+        );
+
+      const listingId =
+        result.listing_id ||
+        result.id;
+
+      showStatus(
+        status,
+        "Передай NFT маркету",
+        "Откроется Telegram. Передай подарок @ovnftrelayer."
+      );
+
+      openRelayer();
+
+      if (listingId) {
+
+        startSellPolling(
+          listingId
+        );
+
+      }
+
+    } catch (error) {
+
+      showStatus(
+        status,
+        "Ошибка",
+        error.message ||
+        "Попробуй ещё раз."
+      );
+
+      button.disabled = false;
+
+      button.textContent =
+        "Передать NFT маркету";
+
+    }
+
+  }
+
+
+  function openRelayer() {
+
+    const url =
+      "https://t.me/" +
+      RELAYER_USERNAME;
+
+    if (tg) {
+
+      try {
+
+        tg.openTelegramLink(
+          url
+        );
+
+        return;
+
+      } catch (_) {}
+
+    }
+
+    window.open(
+      url,
+      "_blank"
+    );
+
+  }
+
+
+  function startSellPolling(
+    listingId
+  ) {
+
+    if (sellPollingTimer) {
+
+      clearInterval(
+        sellPollingTimer
+      );
+
+    }
+
+    let attempts = 0;
+
+    sellPollingTimer =
+      setInterval(
+        async () => {
+
+          attempts++;
+
+          try {
+
+            const data =
+              await api(
+                "/api/listings/" +
+                encodeURIComponent(
+                  listingId
+                )
+              );
+
+            const listing =
+              data.listing ||
+              data;
+
+            if (
+              listing?.status === "active" &&
+              (
+                listing.telegram_gift_id ||
+                listing.gift_id ||
+                listing.nft_id
+              )
+            ) {
+
+              clearInterval(
+                sellPollingTimer
+              );
+
+              sellPollingTimer =
+                null;
+
+              showStatus(
+                document.getElementById(
+                  "sell-status"
+                ),
+                "NFT добавлен",
+                "Подарок подтверждён и выставлен."
+              );
+
+              document.getElementById(
+                "sell-button"
+              ).disabled = false;
+
+              document.getElementById(
+                "sell-button"
+              ).textContent =
+                "Передать ещё один NFT";
+
+              loadListings();
+              loadMyListings();
+
+              return;
+
+            }
+
+            if (
+              listing?.status === "rejected"
+            ) {
+
+              clearInterval(
+                sellPollingTimer
+              );
+
+              sellPollingTimer =
+                null;
+
+              showStatus(
+                document.getElementById(
+                  "sell-status"
+                ),
+                "Не подтверждено",
+                listing.reason ||
+                "Подарок не удалось подтвердить."
+              );
+
+              document.getElementById(
+                "sell-button"
+              ).disabled = false;
+
+              document.getElementById(
+                "sell-button"
+              ).textContent =
+                "Передать NFT маркету";
+
+              return;
+
+            }
+
+            if (attempts >= 120) {
+
+              clearInterval(
+                sellPollingTimer
+              );
+
+              sellPollingTimer =
+                null;
+
+              showStatus(
+                document.getElementById(
+                  "sell-status"
+                ),
+                "Проверка продолжается",
+                "Сервер ещё проверяет. Не передавай повторно."
+              );
+
+              document.getElementById(
+                "sell-button"
+              ).disabled = false;
+
+              document.getElementById(
+                "sell-button"
+              ).textContent =
+                "Проверить снова";
+
+            }
+
+          } catch (e) {
+
+            console.warn(
+              "sell poll:",
+              e
+            );
+
+          }
+
+        },
+        3000
+      );
+
+  }
+
+
+  /* =========================================================
+     STATUS
+  ========================================================= */
+
+  function showStatus(
+    el,
+    title,
+    text
+  ) {
+
+    if (!el) return;
+
+    el.classList.add("show");
+
+    el.innerHTML = `
+      <div class="status-title">
+        ${escapeHTML(title)}
+      </div>
+
+      <div>
+        ${escapeHTML(text)}
+      </div>
+    `;
+
+  }
+
+
+  /* =========================================================
+     STARS
+  ========================================================= */
+
+  async function createInvoice() {
+
+    if (!requireTelegramAuth()) {
+      return;
+    }
+
+    const amount =
+      Math.round(
+        Number(
+          document.getElementById(
+            "topup-stars"
+          ).value || 0
+        )
+      );
+
+    const button =
+      document.getElementById(
+        "topup-button"
+      );
+
+    const status =
+      document.getElementById(
+        "topup-status"
+      );
+
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+
+      showStatus(
+        status,
+        "Укажи количество",
+        "Количество Stars должно быть больше нуля."
+      );
+
+      return;
+
+    }
+
+    button.disabled = true;
+
+    button.innerHTML =
+      `<span class="loader"></span>`;
+
+    try {
+
+      const result =
+        await api(
+          "/api/invoice",
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              amount
+            })
+          }
+        );
+
+      const invoiceLink =
+        result.invoice_link ||
+        result.link;
+
+      if (!invoiceLink) {
+
+        throw new Error(
+          "Сервер не вернул ссылку."
+        );
+
+      }
+
+      showStatus(
+        status,
+        "Счёт создан",
+        "Открываем оплату Stars."
+      );
+
+      if (
+        tg &&
+        typeof tg.openInvoice ===
+        "function"
+      ) {
+
+        tg.openInvoice(
+          invoiceLink,
+          (res) => {
+
+            if (res === "paid") {
+
+              showStatus(
+                status,
+                "Оплата получена",
+                "Баланс обновлён."
+              );
+
+              loadBalance();
+
+            } else {
+
+              showStatus(
+                status,
+                "Не завершено",
+                "Платёж не подтверждён."
+              );
+
+            }
+
+          }
+        );
+
+      } else {
+
+        window.open(
+          invoiceLink,
+          "_blank"
+        );
+
+      }
+
+    } catch (error) {
+
+      showStatus(
+        status,
+        "Ошибка",
+        error.message ||
+        "Не удалось создать счёт."
+      );
+
+    } finally {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Пополнить ⭐";
+
+    }
+
+  }
+
+
+  /* =========================================================
+     TON
+  ========================================================= */
+
+  let currentTonPayment = null;
+  let tonPollTimer = null;
+
+
+  async function createTonInvoice() {
+
+    if (!requireTelegramAuth()) {
+      return;
+    }
+
+    const amount =
+      Number(
+        document.getElementById(
+          "topup-ton"
+        ).value || 0
+      );
+
+    const button =
+      document.getElementById(
+        "topup-ton-button"
+      );
+
+    const status =
+      document.getElementById(
+        "topup-ton-status"
+      );
+
+    if (
+      !Number.isFinite(amount) ||
+      amount <= 0
+    ) {
+
+      showStatus(
+        status,
+        "Укажи сумму",
+        "Сумма в TON должна быть больше нуля."
+      );
+
+      return;
+
+    }
+
+    button.disabled = true;
+
+    button.innerHTML =
+      `<span class="loader"></span>`;
+
+    try {
+
+      const result =
+        await api(
+          "/api/invoice/ton",
+          {
+            method: "POST",
+
+            body: JSON.stringify({
+              amount
+            })
+          }
+        );
+
+      currentTonPayment =
+        result;
+
+      document.getElementById(
+        "ton-address"
+      ).textContent =
+        result.address || "";
+
+      document.getElementById(
+        "ton-comment"
+      ).textContent =
+        result.comment || "";
+
+      document.getElementById(
+        "ton-amount"
+      ).textContent =
+        (result.amount || amount) +
+        " TON";
+
+      document.getElementById(
+        "ton-pay-box"
+      ).classList.add("show");
+
+      showStatus(
+        status,
+        "Отправь TON",
+        "Скопируй адрес и обязательно укажи комментарий (memo)."
+      );
+
+      if (result.payment_id) {
+
+        startTonPolling(
+          result.payment_id
+        );
+
+      }
+
+    } catch (error) {
+
+      showStatus(
+        status,
+        "Ошибка",
+        error.message ||
+        "Не удалось создать платёж."
+      );
+
+    } finally {
+
+      button.disabled = false;
+
+      button.textContent =
+        "Пополнить TON";
+
+    }
+
+  }
+
+
+  function startTonPolling(
+    paymentId
+  ) {
+
+    if (tonPollTimer) {
+
+      clearInterval(
+        tonPollTimer
+      );
+
+    }
+
+    let attempts = 0;
+
+    tonPollTimer =
+      setInterval(
+        async () => {
+
+          attempts++;
+
+          try {
+
+            const data =
+              await api(
+                "/api/ton/status/" +
+                encodeURIComponent(
+                  paymentId
+                )
+              );
+
+            const payment =
+              data.payment ||
+              data;
+
+            if (
+              payment?.status === "paid"
+            ) {
+
+              clearInterval(
+                tonPollTimer
+              );
+
+              tonPollTimer =
+                null;
+
+              showStatus(
+                document.getElementById(
+                  "topup-ton-status"
+                ),
+                "TON зачислен!",
+                "Баланс пополнен на " +
+                (
+                  payment.received_ton ||
+                  payment.amount_ton
+                ) +
+                " TON."
+              );
+
+              loadBalance();
+
+              return;
+
+            }
+
+            if (
+              payment?.status === "expired"
+            ) {
+
+              clearInterval(
+                tonPollTimer
+              );
+
+              tonPollTimer =
+                null;
+
+              showStatus(
+                document.getElementById(
+                  "topup-ton-status"
+                ),
+                "Время истекло",
+                "Создай новый платёж."
+              );
+
+              return;
+
+            }
+
+            if (attempts >= 90) {
+
+              clearInterval(
+                tonPollTimer
+              );
+
+              tonPollTimer =
+                null;
+
+            }
+
+          } catch (e) {
+
+            console.warn(
+              "ton poll:",
+              e
+            );
+
+          }
+
+        },
+        3000
+      );
+
+  }
+
+
+  async function checkTonPayment() {
+
+    if (!requireTelegramAuth()) {
+      return;
+    }
+
+    const status =
+      document.getElementById(
+        "topup-ton-status"
+      );
+
+    if (
+      !currentTonPayment?.payment_id
+    ) {
+
+      showStatus(
+        status,
+        "Нет платежа",
+        "Сначала создай платёж."
+      );
+
+      return;
+
+    }
+
+    try {
+
+      await api(
+        "/api/ton/check",
+        {
+          method: "POST"
+        }
+      );
+
+      const data =
+        await api(
+          "/api/ton/status/" +
+          encodeURIComponent(
+            currentTonPayment.payment_id
+          )
+        );
+
+      const payment =
+        data.payment ||
+        data;
+
+      if (
+        payment?.status === "paid"
+      ) {
+
+        showStatus(
+          status,
+          "TON зачислен!",
+          "Баланс пополнен на " +
+          (
+            payment.received_ton ||
+            payment.amount_ton
+          ) +
+          " TON."
+        );
+
+        loadBalance();
+
+      } else {
+
+        showStatus(
+          status,
+          "Ещё не найдено",
+          "Убедись, что указал правильный memo, и подожди 10–30 сек."
+        );
+
+      }
+
+    } catch (error) {
+
+      showStatus(
+        status,
+        "Ошибка",
+        error.message ||
+        "Попробуй ещё раз."
+      );
+
+    }
+
+  }
+
+
+  function copyTonAddress() {
+
+    copyText(
+      document.getElementById(
+        "ton-address"
+      ).textContent,
+      "Адрес скопирован"
+    );
+
+  }
+
+
+  function copyTonComment() {
+
+    copyText(
+      document.getElementById(
+        "ton-comment"
+      ).textContent,
+      "Комментарий скопирован"
+    );
+
+  }
+
+
+  function copyText(
+    text,
+    msg
+  ) {
+
+    if (!text) return;
+
+    if (
+      navigator.clipboard?.writeText
+    ) {
+
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+
+          if (tg?.showPopup) {
+
+            tg.showPopup({
+              title: "Готово",
+              message: msg,
+              buttons: [
+                { type: "ok" }
+              ]
+            });
+
+          } else {
+
+            alert(msg);
+
+          }
+
+        });
+
+    } else {
+
+      const ta =
+        document.createElement(
+          "textarea"
+        );
+
+      ta.value = text;
+
+      document.body.appendChild(ta);
+
+      ta.select();
+
+      document.execCommand(
+        "copy"
+      );
+
+      document.body.removeChild(
+        ta
+      );
+
+      alert(msg);
+
+    }
+
+  }
+
+
+  function openTonDeepLink() {
+
+    if (
+      !currentTonPayment?.deep_link
+    ) {
+      return;
+    }
+
+    const link =
+      currentTonPayment.deep_link;
+
+    if (tg?.openLink) {
+
+      try {
+
+        tg.openLink(link);
+        return;
+
+      } catch (_) {}
+
+    }
+
+    window.open(
+      link,
+      "_blank"
+    );
+
+  }
+
+
+  /* =========================================================
+     BALANCE
+  ========================================================= */
+
+  async function loadBalance() {
+
+    try {
+
+      const data =
+        await api("/api/me");
+
+      const stars =
+        Number(
+          data.balance_stars ||
+          data.balance ||
+          0
+        );
+
+      const ton =
+        Number(
+          data.balance_ton ||
+          0
+        );
+
+      document.getElementById(
+        "balance-stars"
+      ).textContent =
+        stars.toLocaleString(
+          "ru-RU"
+        );
+
+      document.getElementById(
+        "balance-ton"
+      ).textContent =
+        ton.toLocaleString(
+          "ru-RU",
+          {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 4
+          }
+        );
+
+    } catch (e) {
+
+      console.warn(
+        "balance:",
+        e
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     MY LISTINGS
+  ========================================================= */
+
+  async function loadMyListings() {
+
+    const container =
+      document.getElementById(
+        "my-listings"
+      );
+
+    try {
+
+      const data =
+        await api(
+          "/api/my-listings"
+        );
+
+      const listings =
+        Array.isArray(data)
+          ? data
+          : (
+              data?.listings ||
+              []
+            );
+
+      const real =
+        listings.filter(item =>
+          item &&
+          (
+            item.telegram_gift_id ||
+            item.gift_id ||
+            item.nft_id ||
+            item.id
+          )
+        );
+
+      if (!real.length) {
+
+        container.innerHTML = `
+
+          <div class="empty">
+
+            <div class="empty-icon">
+              ◇
+            </div>
+
+            <div class="empty-title">
+              NFT пока нет
+            </div>
+
+            <div class="empty-text">
+              Выставленные NFT появятся здесь
+            </div>
+
+          </div>
+
+        `;
+
+        return;
+
+      }
+
+      container.innerHTML =
+        `<div class="nft-grid">
+          ${
+            real
+              .map(renderNFT)
+              .join("")
+          }
+        </div>`;
+
+    } catch (e) {
+
+      console.warn(
+        "my-listings:",
+        e
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     TON CONNECT
+  ========================================================= */
+
+  let tonUI = null;
+  let currentWallet = null;
+
+
+  function initTonConnect() {
+
+    if (
+      !window.TON_CONNECT_UI?.TonConnectUI
+    ) {
+
+      console.warn(
+        "TON Connect UI не загружен"
+      );
+
+      return;
+
+    }
+
+    try {
+
+      tonUI =
+        new TON_CONNECT_UI.TonConnectUI({
+          manifestUrl:
+            TON_MANIFEST,
+          buttonRootId:
+            "ton-connect"
+        });
+
+      tonUI.onStatusChange(
+        wallet => {
+
+          currentWallet =
+            wallet || null;
+
+          renderWallet();
+
+        }
+      );
+
+    } catch (e) {
+
+      console.error(
+        "TON Connect:",
+        e
+      );
+
+    }
+
+  }
+
+
+  function renderWallet() {
+
+    const el =
+      document.getElementById(
+        "wallet-address"
+      );
+
+    if (!el) return;
+
+    if (
+      currentWallet?.account?.address
+    ) {
+
+      el.style.display =
+        "block";
+
+      el.textContent =
+        currentWallet.account.address;
+
+    } else {
+
+      el.style.display =
+        "none";
+
+      el.textContent =
+        "";
+
+    }
+
+  }
+
+
+  /* =========================================================
+     BUY NFT
+  ========================================================= */
+
+  async function buyNFT(
+    id,
+    price,
+    title
+  ) {
+
+    let balance = 0;
+
+    try {
+
+      const me =
+        await api("/api/me");
+
+      balance =
+        Number(
+          me.balance_ton ||
+          0
+        );
+
+    } catch (e) {
+
+      console.warn(e);
+
+      return;
+
+    }
+
+    if (
+      balance < price
+    ) {
+
+      if (tg?.showPopup) {
+
+        tg.showPopup({
+
+          title:
+            "Недостаточно TON",
+
+          message:
+            `Нужно ${price} TON. ` +
+            `На балансе: ${balance.toFixed(2)} TON.\n` +
+            `Пополни баланс и попробуй снова.`,
+
+          buttons: [
+            {
+              id: "topup",
+              type: "default",
+              text: "Пополнить"
+            },
+            {
+              type: "cancel"
+            }
+          ]
+
+        }, (btnId) => {
+
+          if (
+            btnId === "topup"
+          ) {
+
+            showPage(
+              "topup"
+            );
+
+          }
+
+        });
+
+      } else {
+
+        if (
+          confirm(
+            `Недостаточно TON (нужно ${price}). ` +
+            `Перейти к пополнению?`
+          )
+        ) {
+
+          showPage(
+            "topup"
+          );
+
+        }
+
+      }
+
+      return;
+
+    }
+
+    if (tg?.showPopup) {
+
+      tg.showPopup({
+
+        title:
+          "Покупка",
+
+        message:
+          `Ты покупаешь «${title}» за ${price} TON.\n\n` +
+          `Это демо-версия. Реальная передача NFT ` +
+          `будет доступна после подключения оплаты продавцу.`,
+
+        buttons: [
+          {
+            type: "ok"
+          }
+        ]
+
+      });
+
+    } else {
+
+      alert(
+        `Покупка «${title}» за ${price} TON\n` +
+        `(демо — реальная передача скоро)`
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     ESCAPE
+  ========================================================= */
+
+  function escapeHTML(v) {
+
+    return String(v)
+      .replace(
+        /&/g,
+        "&amp;"
+      )
+      .replace(
+        /</g,
+        "&lt;"
+      )
+      .replace(
+        />/g,
+        "&gt;"
+      )
+      .replace(
+        /"/g,
+        "&quot;"
+      )
+      .replace(
+        /'/g,
+        "&#039;"
+      );
+
+  }
+
+
+  function escapeAttribute(v) {
+
+    return escapeHTML(v);
+
+  }
+
+
+  /* =========================================================
+     START
+  ========================================================= */
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+      loadProfile();
+
+      /*
+        Баланс требует Telegram auth.
+        Если приложение открыто не из Telegram,
+        функция просто покажет ошибку в console.
+      */
+
+      loadBalance();
+
+      loadListings();
+
+      initTonConnect();
+
+    }
+  );
+
+</script>
+
+</body>
+</html>
