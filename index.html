@@ -1542,11 +1542,10 @@
     }
 
     const requestOptions = {
-      ...options,
-      headers,
-      mode: "cors",
-      credentials: "include"
-    };
+  ...options,
+  headers,
+  mode: "cors"
+};
 
     const response =
       await fetch(API + path, requestOptions);
